@@ -5,8 +5,7 @@ const utils = require('../utils/utils')
 
 const postCreateOrderSea = async (req, res, next) => {
     try {
-        // const { sub } = req.user
-        const sub = '62da2f1040a76e8114d54ba7'
+        const { sub } = req.user
         const { transportType, productType, productQuantity, registerDate,deliveryDate, deliveryPrice, portDelivery, fleetNumber,guideNumber } = req.body.values
         const { createDiscount,validateFields } = utils
 
@@ -57,8 +56,7 @@ const postCreateOrderSea = async (req, res, next) => {
 
 const deleteOrder = async (req, res, next) => {
     const orderId = req.params.id
-    // const { sub } = req.user
-    const sub = '62da2f1040a76e8114d54ba7'
+    const { sub } = req.user
     try {
         if (!orderId) {
             res.status(400).json({ message: 'Request could not be processed' })
@@ -86,17 +84,18 @@ const deleteOrder = async (req, res, next) => {
 
 const patchEditOrder = async (req, res, next) => {
     const orderId = req.params.id
-    const { ...itemsToEdit } = req.body
+    const { sub } = req.user
+    const {itemsToEdit } = req.body
+
     try {
         if (!orderId) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
-
-        const order = await Order.find({ clientId: sub })
+        const order = await Order.findByIdAndUpdate(orderId,{...itemsToEdit})
         if (!order) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
-        order = { ...order, itemsToEdit }
+
         await order.save()
 
         res.status(200).json({ message: 'Orders Edited Successfully' })
@@ -130,7 +129,7 @@ const getClientOrder = async (req, res, next) => {
 
 
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 5
 
 const getAllOrders = async (req, res, next) => {
     const page = req.query.page || 0

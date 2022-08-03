@@ -20,15 +20,18 @@ const authenticateRoutes = require('./routes/authenticate.routes')
 app.use('/authenticate',authenticateRoutes)
 
 app.use(csrfProtection);
-app.get('/order/csrf-token',(req,res)=>{ 
+app.get('/app/csrf-token',(req,res)=>{ 
     res.json({csrfToken:req.csrfToken()})
 })
 
 const orderRoutes = require('./routes/orders.routes')
-app.use('/order',orderRoutes)
+app.use('/app/order',orderRoutes)
 
-// app.use('/wareHouse',)
-// app.use('/port',)
+const userRoutes = require('./routes/user.routes')
+app.use('/app/user',userRoutes)
+
+const truckRoutes = require('./routes/truck.routes')
+app.use('/app/truck',truckRoutes)
 
 
 

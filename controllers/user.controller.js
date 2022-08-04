@@ -51,7 +51,25 @@ const patchEditClient = async(req,res,next) =>{
 }
 
 
+const getClientsOptions = async(req,res,next) =>{
+    
+    try {
+        const clients = await Client.find({},{clientName:1,_id:1})
+        if (!clients) {
+            res.status(400).json({ message: 'No Clients found' })
+        }
+        
+        res.status(200).json({ message: 'Orders found Successfully',clients})
+
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ message: 'Error processing your request' })
+    }
+}
+
+
 module.exports = {
     getAllClients,
-    patchEditClient
+    patchEditClient,
+    getClientsOptions
 }

@@ -6,6 +6,7 @@ const {isAuthenticated} = require('../middleware/auth.middleware')
 
 
 router.get('/get-all-users',isAuthenticated,userController.getAllClients)
+router.get('/get-all-client-options',isAuthenticated,userController.getClientsOptions)
 router.patch('/edit-client/:clientId',isAuthenticated,userController.patchEditClient)
 
 

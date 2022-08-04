@@ -11,8 +11,8 @@ const createToken = (user) =>{
   return jwt.sign(
     {
       sub: user._id,
-      email: user.email,
-      role: user.role,
+      email: user.clientEmail,
+      role: user.clientRole,
       iss: 'api.logistics',
       aud: 'api.logistics'
     },

@@ -31,7 +31,20 @@ const getAllTrucks = async (req,res,next) =>{
 
 
 const patchEditTruck = async (req,res,next) =>{
-
+    const {truckInfo} = req.body
+    const {_id,truckId,status,capacity,model,brand,year } = truckInfo
+    const data = {truckId,status,capacity,model,brand,year}
+    try {
+        const truck = await Truck.findByIdAndUpdate(_id,{...data})
+        if(!truck){
+            res.status(400).json({ message: 'No Trucks found' })
+        }
+        res.status(200).json({ message: 'Truck Edited Successfully'})
+        
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ message: 'Error processing your request' })
+    }
 }
 
 
@@ -57,7 +70,21 @@ const deleteTruck = async (req,res,next) =>{
 }
 
 const postCreateTruck = async (req,res,next) =>{
-
+    const {truckInfo} = req.body
+    const {truckId,status,capacity,model,brand,year } = truckInfo
+    const data = {truckId,status,capacity,model,brand,year}
+    try {
+        const truck = new Truck({...data})
+        if(!truck){
+            res.status(400).json({ message: 'No Trucks found' })
+        }
+        await truck.save()
+        res.status(200).json({ message: 'Truck Added Successfully'})
+        
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({ message: 'Error processing your request' })
+    }
 }
 
 

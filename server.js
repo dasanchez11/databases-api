@@ -33,6 +33,9 @@ app.use('/app/user',userRoutes)
 const truckRoutes = require('./routes/truck.routes')
 app.use('/app/truck',truckRoutes)
 
+const shipRoutes = require('./routes/ship.routes')
+app.use('/app/ship',shipRoutes)
+
 
 
 mongoose.connect(process.env.MONGO_DB_URL)

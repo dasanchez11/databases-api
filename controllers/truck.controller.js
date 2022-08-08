@@ -1,3 +1,4 @@
+const { Sequelize } = require('sequelize');
 const Truck = require('../models/truck.model');
 
 
@@ -9,12 +10,11 @@ const getAllTrucks = async (req,res,next) =>{
     const query={}
     try {
         const skip = (page-1)*itemsPerPage
-        const countPromise = Truck.estimatedDocumentCount(query)
-        const trucksPromise = Truck.find(query).limit(itemsPerPage).skip(skip)
+        const countPromise = Truck.count(query)
+        const trucksPromise = Truck.findAll({offset:skip, limit:itemsPerPage,
+            attributes:['truckId','status','capacity','model','year','brand',[Sequelize.literal('truck.truckId'),'_id']]})
 
         const [count,trucks] = await Promise.all([countPromise,trucksPromise])
-
-        
         const pageCount = Math.ceil(count/itemsPerPage)
 
         if(!trucks){
@@ -35,7 +35,8 @@ const patchEditTruck = async (req,res,next) =>{
     const {_id,truckId,status,capacity,model,brand,year } = truckInfo
     const data = {truckId,status,capacity,model,brand,year}
     try {
-        const truck = await Truck.findByIdAndUpdate(_id,{...data})
+        const truck = await Truck.update({...data},{where:{truckId:truckId}})
+        
         if(!truck){
             res.status(400).json({ message: 'No Trucks found' })
         }
@@ -56,7 +57,7 @@ const deleteTruck = async (req,res,next) =>{
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        const truck = await Truck.findByIdAndDelete(truckId)
+        const truck = await Truck.destroy({where:{truckId:truckId}})
         if (!truck) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
@@ -74,7 +75,7 @@ const postCreateTruck = async (req,res,next) =>{
     const {truckId,status,capacity,model,brand,year } = truckInfo
     const data = {truckId,status,capacity,model,brand,year}
     try {
-        const truck = new Truck({...data})
+        const truck =  await Truck.create({...data})
         if(!truck){
             res.status(400).json({ message: 'No Trucks found' })
         }

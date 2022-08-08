@@ -1,4 +1,6 @@
 const Ship = require('../models/ship.model');
+const { Sequelize } = require('sequelize');
+
 
 
 const ITEMS_PER_PAGE = 5
@@ -9,8 +11,9 @@ const getAllShips = async (req,res,next) =>{
     const query={}
     try {
         const skip = (page-1)*itemsPerPage
-        const countPromise = Ship.estimatedDocumentCount(query)
-        const shipsPromise = Ship.find(query).limit(itemsPerPage).skip(skip)
+        const countPromise = Ship.count(query)
+        const shipsPromise = Ship.findAll({offset:skip, limit:itemsPerPage,
+            attributes:['shipId','status','capacity','model','year','brand',[Sequelize.literal('ship.shipId'),'_id']]})
         const [count,ships] = await Promise.all([countPromise,shipsPromise])
         const pageCount = Math.ceil(count/itemsPerPage)
 
@@ -33,7 +36,7 @@ const patchEditShip = async (req,res,next) =>{
     const {_id,shipId,status,capacity,model,brand,year } = shipInfo
     const data = {shipId,status,capacity,model,brand,year}
     try {
-        const ship = await Ship.findByIdAndUpdate(_id,{...data})
+        const ship = await Ship.update({...data},{where:{shipId:shipId}})
         if(!ship){
             res.status(400).json({ message: 'No Trucks found' })
         }
@@ -54,7 +57,7 @@ const deleteShip = async (req,res,next) =>{
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        const ship = await Ship.findByIdAndDelete(shipId)
+        const ship = await Ship.destroy({where:{shipId:shipId}})
         if (!ship) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
@@ -74,7 +77,7 @@ const postCreateShip = async (req,res,next) =>{
     const {shipId,status,capacity,model,brand,year } = shipInfo
     const data = {shipId,status,capacity,model,brand,year}
     try {
-        const ship = new Ship({...data})
+        const ship = await Ship.create({...data})
         if(!ship){
             res.status(400).json({ message: 'No Ships found' })
         }

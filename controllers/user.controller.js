@@ -1,4 +1,8 @@
+const { Sequelize } = require('sequelize')
 const Client = require('../models/client.model')
+const Order = require('../models/order.model')
+const sequelize = require('../utils/database')
+
 
 
 const ITEMS_PER_PAGE = 5
@@ -8,17 +12,21 @@ const getAllClients = async(req,res,next) =>{
     const query={}
     try {
         const skip = (page-1)*itemsPerPage
-        const countPromise = Client.estimatedDocumentCount(query)
-        const clientPromise = Client.find(query,{clientPassword:0}).limit(itemsPerPage).skip(skip)
-
-        const [count,clients] = await Promise.all([countPromise,clientPromise])
-
+        const countPromise = Client.count(query)
+        const clientPromise = Client.findAll({
+            include:{model:Order,attributes:[]},
+            attributes:['_id','clientEmail','clientNit','clientName','clientRole',[Sequelize.fn('COUNT',Sequelize.col('orders._id')),'clientOrders']],
+            group:'client._id',
+            },{offset:skip, 
+            limit:itemsPerPage}
+        )
+    
+        let [count,clients] = await Promise.all([countPromise,clientPromise])
         const pageCount = Math.ceil(count/itemsPerPage)
 
         if (!clients) {
             res.status(400).json({ message: 'No Clients found' })
         }
-        
 
 
         res.status(200).json({ message: 'Orders found Successfully', pagination:{count,pageCount,itemsPerPage},clients})
@@ -36,12 +44,10 @@ const patchEditClient = async(req,res,next) =>{
     const {clientName, clientNit, clientRole} = userData
     const data = {clientName,clientNit,clientRole}
     try {
-        const client = await Client.findByIdAndUpdate(clientId,{...data})
+        const client = await Client.update({...data},{where:{_id:clientId}})
         if(!client){
             res.status(400).json({ message: 'No Clients found' })
         }
-
-        client.save()
         res.status(200).json({ message: 'Client Edited Successfully',client })
         
     } catch (error) {
@@ -54,7 +60,7 @@ const patchEditClient = async(req,res,next) =>{
 const getClientsOptions = async(req,res,next) =>{
     
     try {
-        const clients = await Client.find({},{clientName:1,_id:1})
+        const clients = await Client.findAll({attributes:['_id','clientName']})
         if (!clients) {
             res.status(400).json({ message: 'No Clients found' })
         }

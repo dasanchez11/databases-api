@@ -4,6 +4,7 @@ require('dotenv').config()
 
 
 const createToken = (user) =>{
+  
   // Sign the JWT
   if (!user.clientRole) {
     throw new Error('No user role specified');

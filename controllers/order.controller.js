@@ -1,7 +1,7 @@
 const Order = require('../models/order.model')
 const Client = require('../models/client.model');
 const utils = require('../utils/utils')
-
+ 
 
 const postCreateOrderSea = async (req, res, next) => {
     try {
@@ -32,17 +32,18 @@ const postCreateOrderSea = async (req, res, next) => {
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        const client = await Client.findById(clientToAddOrder)
+        const client = await Client.findByPk(clientToAddOrder)
         if (!client) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
-        const order = new Order({ clientId: clientToAddOrder,...values })
-        await order.save();
-        client.clientOrders.push(order._id)
-        await client.save()
+        const order = await client.createOrder(values)
+        // const order = new Order({ clientId: clientToAddOrder,...values })
+        // await order.save();
+        // client.clientOrders.push(order._id)
+        // await client.save() 
+ 
 
-
-        res.status(200).json({ message: 'Orders Added Successfully', orderId: order._id })
+        res.status(200).json({ message: 'Orders Added Successfully', orderId: order.dataValues._id })
     } catch (error) {
         console.log(error)
         res.status(400).json({ message: 'Error processing your request' })
@@ -51,7 +52,8 @@ const postCreateOrderSea = async (req, res, next) => {
 
 
 const postDeleteOrder = async (req, res, next) => {
-    const { orderId, clientId } = req.params.id
+    console.log(req.body)
+    const { itemId, clientId } = req.body
     const { sub, role } = req.user
 
     let clientIdToDelete
@@ -62,23 +64,16 @@ const postDeleteOrder = async (req, res, next) => {
     }
 
     try {
-        if (!orderId) {
+        if (!itemId) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        const client = await Client.findById(clientIdToDelete)
+        const client = await Client.findByPk(clientIdToDelete)
         if (!client) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        if (!client.clientOrders.includes(orderId)) {
-            res.status(400).json({ message: 'Request could not be processed' })
-        }
-
-        client.clientOrders = client.clientOrders.filter(order => !order.equals(orderId))
-        await client.save()
-
-        const order = await Order.findByIdAndDelete(orderId)
+        const order = await Order.destroy({where:{_id:itemId,clientId:clientIdToDelete}})
         if (!order) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
@@ -109,38 +104,13 @@ const patchEditOrder = async (req, res, next) => {
             res.status(400).json({ message: 'Request could not be processed' })
         }
 
-        const order = await Order.findById(orderId)
+        const order = await Order.findByPk(orderId)
         if (!order) {
             res.status(400).json({ message: 'Request could not be processed' })
         }
-
-        if (!order.clientId.equals(itemsToEdit.clientId)) {
-            //Delete order from client
-            const client = await Client.findById(order.clientId)
-            if (!client) {
-                res.status(400).json({ message: 'Request could not be processed' })
-            }
-
-            const hasElement = client.clientOrders.filter(element => element.equals(orderId))
-
-            if (!hasElement.length > 0) {
-                res.status(400).json({ message: 'Request could not be processed' })
-            }
-
-            client.clientOrders = client.clientOrders.filter(order => !order.equals(orderId))
-            await client.save()
-
-            //add order to new client
-            const newClient = await Client.findById(itemsToEdit.clientId)
-            if (!newClient) {
-                res.status(400).json({ message: 'Request could not be processed' })
-            }
-            newClient.clientOrders.push(order._id)
-            await newClient.save()
-        }
-
+        
         itemsToEdit = { ...itemsToEdit, clientId: clientIdToEdit }
-        await Order.findByIdAndUpdate(orderId, { ...itemsToEdit })
+        await Order.update(itemsToEdit,{where:{_id:orderId}})
 
         res.status(200).json({ message: 'Orders Edited Successfully' })
 
@@ -183,17 +153,20 @@ const getAllOrders = async (req, res, next) => {
     if(role==='admin'){
         query  = {}
     }else{
-        query = {clientId:sub}
+        query = {where:{clientId:sub}}
     }
     
     try {
         const skip = (page - 1) * itemsPerPage
-        const countPromise = Order.countDocuments(query)
-        const ordersPromise = Order.find(query).limit(itemsPerPage).skip(skip)
+        const countPromise = Order.count(query)
+        const ordersPromise = Order.findAll({offset:skip, limit:itemsPerPage,query})
 
         const [count, orders] = await Promise.all([countPromise, ordersPromise])
-        const pageCount = Math.ceil(count / itemsPerPage)
+        console.log('count',count)
+        console.log('orders',orders)
 
+        const pageCount = Math.ceil(count / itemsPerPage)
+        
         if (!orders) {
             res.status(400).json({ message: 'No orders found' })
         }

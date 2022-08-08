@@ -1,16 +1,33 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require('../utils/database')
 
-const truckModel = new Schema({
-    truckId:{type:String,required:true},
-    status:{type:String,required:true},
-    capacity:{type:Number,required:true},
-    model:{type:String,required:true},
-    brand:{type:String,required:true},
-    year:{type:Number,required:true},
-})
+const Truck = sequelize.define('truck', {
+    truckId:{
+        type:DataTypes.STRING,
+        allowNull:false,
+        primaryKey: true,
+    },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  capacity:{
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  model:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  brand:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  year:{
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+});
 
 
-
-
-module.exports = mongoose.model('truck',truckModel)
+module.exports = Truck

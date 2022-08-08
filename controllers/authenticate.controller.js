@@ -3,14 +3,17 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const utils = require('../utils/utils');
 const bcrypt = require('bcryptjs');
+const { where } = require('../models/order.model');
 
 module.exports.postSignIn = async (req, res, next) => {
     try {
         const { clientEmail, clientPassword } = req.body;
 
         const client = await Client.findOne({
-            clientEmail:clientEmail
-        }).lean();
+            where:{
+                clientEmail:clientEmail
+            }
+        });
 
         if (!client) {
             return res.status(403).json({
@@ -22,13 +25,14 @@ module.exports.postSignIn = async (req, res, next) => {
             clientPassword,
             client.clientPassword
         );
+        
+
 
         if (passwordValid) {
-            const { clientPassword, ...rest } = client;
+            const { clientPassword, ...rest } = client.dataValues;
             
             const clientInfo = Object.assign({}, { ...rest });
             const token = createToken(clientInfo);
-
             const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
             const expiresAt = decodedToken.exp;
 
@@ -39,7 +43,7 @@ module.exports.postSignIn = async (req, res, next) => {
             res.json({
                 message: 'Authentication successful!',
                 token,
-                clientInfo,
+                clientInfo:clientInfo,
                 expiresAt
             });
         } else {
@@ -70,9 +74,9 @@ module.exports.putSignUp = async (req, res, next) => {
             clientNit
         };
 
-        const existingEmail = await Client.findOne({
+        const existingEmail = await Client.findOne({where:{
             clientEmail: clientData.clientEmail
-        }).lean();
+        }});
 
         if (existingEmail) {
             return res
@@ -82,6 +86,7 @@ module.exports.putSignUp = async (req, res, next) => {
 
         const newClient = new Client(clientData);
         const savedClient = await newClient.save();
+
         if (savedClient) {
             const token = createToken(newClient);
             const decodedToken = jwt.verify(token,process.env.SECRET_KEY);
@@ -111,7 +116,7 @@ module.exports.putSignUp = async (req, res, next) => {
             return res.json({
                 message: 'Client created!',
                 token,
-                clientInfo,
+                clientInfo:clientInfo.dataValues,
                 expiresAt
             });
         } else {

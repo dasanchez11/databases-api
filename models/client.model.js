@@ -1,13 +1,35 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require('../utils/database')
 
-const theClientModel = new Schema({
-    clientName:{type:String,required:true},
-    clientEmail:{type:String,required:true},
-    clientPassword:{type:String,required:true},
-    clientRole: { type: String, required: true, default: 'user' },
-    clientNit:{type:String,required:true},
-    clientOrders:[{type:Schema.Types.ObjectId}]
+const Client = sequelize.define('client', {
+    _id:{
+        type:DataTypes.STRING,
+        allowNull:false,
+        primaryKey: true,
+        defaultValue:DataTypes.UUIDV4
+    },
+    clientName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  clientEmail: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  clientPassword:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  clientRole:{
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'user'
+  },
+  clientNit:{
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
 });
 
-module.exports = mongoose.model('client', theClientModel);
+
+module.exports = Client
